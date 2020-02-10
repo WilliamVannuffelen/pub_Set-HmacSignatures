@@ -211,7 +211,7 @@ function New-UserList($secretHexString){
 # sanity check; ensure correct data isn't overwritten in bulk because of hashing error
 # report and terminate if more than 50 changes would occur
 function Test-HmacSignatures($validRrnUsers){
-    $hmacDelta = $validRrnUsers | Where-Object {($_.hmacSigAd -ne $hmacSigCalc) -and ($_.hmacSigAd.Length -eq 64)}
+    $hmacDelta = $validRrnUsers | Where-Object {($_.hmacSigAd -ne $_.hmacSigCalc) -and ($_.hmacSigAd.Length -eq 64)}
     
     if($hmacDelta.Count -gt 50){
         "$(Get-Timestamp) ERROR - Found $(($hmacDelta | Measure-Object).Count) mismatches in HMAC between AD and current calculated value. Root cause should be investigated." | Add-Content -Path $logFile
