@@ -160,7 +160,7 @@ function New-UserList($secretHexString){
     $params = @{
         Filter = "*"
         SearchBase = "OU=Users,DC=CONTOSO,DC=COM"
-        Properties = "enabled","name","sAMAccountName","userPrincipalName","employeeNumber","extensionAttribute15"
+        Properties = "enabled","name","sAMAccountName","userPrincipalName","employeeNumber","extensionAttribute15","whenCreated"
     }
     Do{
         Try{
@@ -180,7 +180,9 @@ function New-UserList($secretHexString){
                                         {(Test-Rrn (Format-Num $_)) -eq "BIS"} {New-HmacSignature $secretHexString (Format-Num $_); break}
                                         default {$null}
                                     }
-                                }}
+                                }},
+                                @{Name="whenCreated";           Expression={$_.whenCreated}}
+
             $allUsers.Add($user)
             $allUsers = $allUsers[0]
                                 
@@ -386,8 +388,10 @@ $msolConnectionResult = Connect-Msol $office365Credentials                      
 if($msolConnectionResult){              
     $licencedUsers = @()
     foreach($invalidRrnUser in $invalidRrnUsers){                               # for each user with an invalid RRN:
-        If(Test-O365Licence $invalidRrnUser){                                   # test whether they exist in O365 and have an active licence
-            $licencedUsers += $invalidRrnUser
+        if($invalidRrnUser.whenCreated -gt (Get-Date).AddDays(-3)){
+            if(Test-O365Licence $invalidRrnUser){                               # test whether they exist in O365 and have an active licence
+                $licencedUsers += $invalidRrnUser
+            }
         }
     }
     if($licencedUsers.Count -gt 0){
