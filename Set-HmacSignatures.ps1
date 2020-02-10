@@ -279,8 +279,14 @@ function Test-O365Licence($user){
             $userObject = Get-MsolUser -UserPrincipalName $user.userPrincipalName -ErrorAction Stop
         }
     }
-    catch [Microsoft.Online.Administration.Automation.UserNotFoundException]{
-        "$(Get-Timestamp) Not found in O365: $($user.userPrincipalName)." | Add-Content -Path $logFile
+    catch [Microsoft.Online.Administration.Automation.MicrosoftOnlineException]{
+        if($_.fullyQualifiedErrorId -eq "Microsoft.Online.Administration.Automation.UserNotFoundException,Microsoft.Online.Administration.Automation.GetUser"){
+            "$(Get-Timestamp) Not found in O365: $($user.userPrincipalName)." | Add-Content -Path $logFile
+        }
+        else{
+            "$(Get-Timestamp) ERROR - Error while searching for user: $($user.userPrincipalName)." | Add-Content -Path $logFile
+            $_.Exception.Message | Add-Content -Path $logFile
+        }
     }
     catch{
         "$(Get-Timestamp) ERROR - Failed to find user $($user.userPrincipalName)." | Add-Content -Path $logFile
